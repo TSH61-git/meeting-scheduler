@@ -37,7 +37,7 @@ class CalendarService:
         self,
         person_names: List[str],
         event_duration: timedelta
-    ) -> List[time]:
+    ) -> List[Tuple[time, time]]:
         """
         Find all available time slots in a single day when all specified people
         are free, and the slot can accommodate the event duration.
@@ -54,7 +54,7 @@ class CalendarService:
             event_duration: Desired meeting duration as a timedelta.
             
         Returns:
-            List of datetime.time objects representing available slot start times,
+            List of (start_time, end_time) tuples representing available time ranges,
             sorted in chronological order. Empty list if no slots found.
             
         Raises:
@@ -208,25 +208,24 @@ class CalendarService:
         self,
         free_intervals: List[Tuple[time, time]],
         event_duration: timedelta
-    ) -> List[time]:
+    ) -> List[Tuple[time, time]]:
         """
-        Extract slot start times from free intervals that can fit the event duration.
+        Filter free intervals that can fit the event duration.
         
         Args:
             free_intervals: List of (start, end) time tuples.
             event_duration: Required meeting duration as a timedelta.
             
         Returns:
-            List of datetime.time objects representing valid slot start times.
+            List of (start, end) time tuples representing valid time ranges.
         """
         available_slots = []
         duration_minutes = int(event_duration.total_seconds() / 60)
         
         for start, end in free_intervals:
-            # Check if this interval can fit the event
             interval_minutes = self._time_difference_minutes(start, end)
             if interval_minutes >= duration_minutes:
-                available_slots.append(start)
+                available_slots.append((start, end))
                 logger.debug(
                     f"Valid slot: {start} - {end} ({interval_minutes} min)"
                 )

@@ -164,7 +164,7 @@ def display_results(person_names: list, duration_minutes: int, available_slots: 
     Args:
         person_names: List of person names.
         duration_minutes: Meeting duration in minutes.
-        available_slots: List of datetime.time objects representing available slot start times.
+        available_slots: List of (start_time, end_time) tuples representing available time ranges.
     """
     print(f"\n=== Available Meeting Slots ===")
     print(f"People: {', '.join(person_names)}")
@@ -175,17 +175,21 @@ def display_results(person_names: list, duration_minutes: int, available_slots: 
         print("No available slots found for all participants.")
         return
     
-    print("Available time slots:")
-    for slot_time in available_slots:
-        # Calculate end time
-        end_minutes = slot_time.hour * 60 + slot_time.minute + duration_minutes
-        end_hour = end_minutes // 60
-        end_minute = end_minutes % 60
+    for start_time, end_time in available_slots:
+        start_str = start_time.strftime("%H:%M")
         
-        end_time_str = f"{end_hour:02d}:{end_minute:02d}"
-        slot_time_str = slot_time.strftime("%H:%M")
+        # Calculate latest possible start time (end_time - duration)
+        end_minutes_total = end_time.hour * 60 + end_time.minute
+        latest_start_minutes = end_minutes_total - duration_minutes
+        latest_start_hour = latest_start_minutes // 60
+        latest_start_minute = latest_start_minutes % 60
+        latest_start_str = f"{latest_start_hour:02d}:{latest_start_minute:02d}"
         
-        print(f"  • {slot_time_str} - {end_time_str}")
+        # If start and end are the same, show only start time
+        if start_str == latest_start_str:
+            print(f"Starting Time of available slots: {start_str}")
+        else:
+            print(f"Starting Time of available slots: {start_str} - {latest_start_str}")
     
     print(f"\nTotal: {len(available_slots)} available slot(s)")
 
