@@ -66,12 +66,11 @@ class TestCalendarService:
         service = CalendarService(example_calendar)
         slots = service.find_available_slots(["Alice", "Jack"], timedelta(minutes=60))
         
-        # Convert to list of time objects for comparison
         expected_slots = [
-            time(7, 0),    # Before any events
-            time(9, 40),   # After Jack's sales call (09:00-09:40)
-            time(14, 0),   # After lunch
-            time(17, 0),   # After yoga
+            (time(7, 0),  time(8, 0)),    # Before any events
+            (time(9, 40), time(13, 0)),   # After Jack's sales call
+            (time(14, 0), time(16, 0)),   # After lunch
+            (time(17, 0), time(19, 0)),   # After yoga
         ]
         
         assert slots == expected_slots, (
@@ -94,10 +93,10 @@ class TestCalendarService:
         # 15:00-16:00 (1 hour) ✓
         # 17:00-19:00 (2 hours) ✓
         expected_slots = [
-            time(7, 0),
-            time(11, 30),
-            time(15, 0),
-            time(17, 0),
+            (time(7, 0),   time(8, 0)),
+            (time(11, 30), time(13, 0)),
+            (time(15, 0),  time(16, 0)),
+            (time(17, 0),  time(19, 0)),
         ]
         
         assert slots == expected_slots
@@ -130,7 +129,7 @@ class TestCalendarService:
         
         # With 15-minute duration, many small gaps become available
         # At minimum: 07:00 should be available
-        assert time(7, 0) in slots
+        assert any(start == time(7, 0) for start, _ in slots)
 
     def test_slots_with_long_duration(self, example_calendar):
         """
@@ -144,7 +143,7 @@ class TestCalendarService:
         )
         
         # Most gaps are < 4 hours, so expect empty or very few
-        assert len(slots) <= 1
+        assert len(slots) == 0
 
     def test_boundary_case_start_of_day(self, empty_calendar):
         """
@@ -158,8 +157,8 @@ class TestCalendarService:
         service = CalendarService(empty_calendar)
         slots = service.find_available_slots(["Empty"], timedelta(minutes=60))
         
-        # Should have one slot at 07:00
-        assert time(7, 0) in slots
+        # Should have one slot starting at 07:00
+        assert any(start == time(7, 0) for start, _ in slots)
 
     def test_boundary_case_end_of_day(self, empty_calendar):
         """
@@ -175,7 +174,7 @@ class TestCalendarService:
         slots = service.find_available_slots(["Empty"], timedelta(minutes=60))
         
         # One continuous free interval: 07:00-19:00
-        assert slots == [time(7, 0)]
+        assert slots == [(time(7, 0), time(19, 0))]
 
     def test_overlapping_events_merge_correctly(self, empty_calendar):
         """
@@ -194,8 +193,8 @@ class TestCalendarService:
         # Should have slots in the gaps:
         # 07:00-08:00 (1 hour) ✓
         # 12:00-19:00 (7 hours) ✓
-        assert time(7, 0) in slots
-        assert time(12, 0) in slots
+        assert any(start == time(7, 0) for start, _ in slots)
+        assert any(start == time(12, 0) for start, _ in slots)
 
     def test_adjacent_events_no_gap(self, empty_calendar):
         """
@@ -215,8 +214,8 @@ class TestCalendarService:
         # Should have slots:
         # 07:00-08:00 (1 hour) ✓
         # 10:00-19:00 (9 hours) ✓
-        assert time(7, 0) in slots
-        assert time(10, 0) in slots
+        assert any(start == time(7, 0) for start, _ in slots)
+        assert any(start == time(10, 0) for start, _ in slots)
 
     def test_error_empty_person_list(self, example_calendar):
         """Test that empty person list raises ValueError."""
@@ -262,10 +261,10 @@ class TestCalendarService:
         # Merged busy: 08:00-09:40, 10:00-11:30, 13:00-15:00, 16:00-17:00
         # Free: 07:00-08:00, 11:30-13:00, 15:00-16:00, 17:00-19:00
         expected = [
-            time(7, 0),
-            time(11, 30),
-            time(15, 0),    # Not 14:00, because Bob is busy 13:00-15:00
-            time(17, 0),
+            (time(7, 0),   time(8, 0)),
+            (time(11, 30), time(13, 0)),
+            (time(15, 0),  time(16, 0)),   # Not 14:00, because Bob is busy 13:00-15:00
+            (time(17, 0),  time(19, 0)),
         ]
         
         assert slots == expected

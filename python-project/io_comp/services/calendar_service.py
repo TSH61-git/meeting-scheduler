@@ -38,7 +38,7 @@ class CalendarService:
         person_names: List[str],
         event_duration: timedelta
     ) -> List[Tuple[time, time]]:
-        """Find all available time slots when all specified people are free."""
+        """Find all available time slots when all specified people are free, as (start, end) tuples."""
         self._validate_inputs(person_names, event_duration)
 
         combined_busy = self._merge_busy_intervals(*self._collect_busy_intervals(person_names))
@@ -49,7 +49,7 @@ class CalendarService:
 
         available_slots = self._filter_slots_by_duration(free_intervals, event_duration)
         logger.info(f"Found {len(available_slots)} available slots for {len(person_names)} people")
-        return [start for start, _ in available_slots]
+        return available_slots
 
     def _collect_busy_intervals(self, person_names: List[str]) -> List[List[Tuple[time, time]]]:
         """Return a list of busy interval lists, one per person."""
