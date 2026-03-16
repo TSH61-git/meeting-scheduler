@@ -21,52 +21,22 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """
-    Main entry point for the calendar application.
-    
-    Usage:
-        python -m io_comp.app
-        -> Prompts for person names and meeting duration
-        
-    Or call with arguments:
-        python -m io_comp.app Alice Jack 60
-        -> Finds 60-minute slots for Alice and Jack
-    """
     try:
-        # Determine CSV file path (relative to this module)
-        module_dir = Path(__file__).parent.parent
-        csv_file_path = module_dir / "resources" / "calendar.csv"
-        
+        csv_file_path = Path(__file__).parent.parent / "resources" / "calendar.csv"
         if not csv_file_path.exists():
             logger.error(f"Calendar file not found: {csv_file_path}")
             print(f"Error: Calendar file not found at {csv_file_path}")
             sys.exit(1)
-        
-        # Initialize DI container with calendar data
+
         logger.info("Initializing application...")
-        container = create_default_container(str(csv_file_path))
-        
-        # Get the calendar service from the container
-        calendar_service = container.get("calendar_service")
-        
-        # Parse command-line arguments or prompt user
-        if len(sys.argv) > 1:
-            # Arguments provided: calendar.py Alice Jack 60
-            person_names, duration_minutes = parse_args(sys.argv[1:])
-        else:
-            # Interactive mode
-            person_names, duration_minutes = prompt_user()
-        
-        # Find available slots
-        event_duration = timedelta(minutes=duration_minutes)
+        calendar_service = create_default_container(str(csv_file_path)).get("calendar_service")
+
+        person_names, duration_minutes = _resolve_inputs()
         available_slots = calendar_service.find_available_slots(
-            person_names,
-            event_duration
+            person_names, timedelta(minutes=duration_minutes)
         )
-        
-        # Display results
         display_results(person_names, duration_minutes, available_slots)
-        
+
     except FileNotFoundError as e:
         logger.error(f"File error: {e}")
         print(f"Error: {e}")
@@ -79,6 +49,13 @@ def main():
         logger.exception(f"Unexpected error: {e}")
         print(f"Unexpected error: {e}")
         sys.exit(1)
+
+
+def _resolve_inputs() -> tuple:
+    """Return (person_names, duration_minutes) from CLI args or interactive prompt."""
+    if len(sys.argv) > 1:
+        return parse_args(sys.argv[1:])
+    return prompt_user()
 
 
 def parse_args(args: list) -> tuple:

@@ -36,9 +36,6 @@ class CSVDataLoader:
         """
         Load and parse the CSV file into a Calendar object.
         
-        Returns:
-            A populated Calendar object.
-            
         Raises:
             FileNotFoundError: If the CSV file does not exist.
             ValueError: If CSV format is invalid or data cannot be parsed.
@@ -47,72 +44,48 @@ class CSVDataLoader:
             raise FileNotFoundError(f"Calendar file not found: {self.file_path}")
 
         calendar = Calendar()
-        
         try:
             with open(self.file_path, 'r', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                row_number = 0
-                
-                for row in reader:
-                    row_number += 1
-                    
-                    # Skip empty rows
+                for row_number, row in enumerate(csv.reader(csvfile), start=1):
                     if not row or all(cell.strip() == '' for cell in row):
                         continue
-                    
-                    # Validate row format
-                    if len(row) != 4:
-                        raise ValueError(
-                            f"Row {row_number}: Expected 4 columns, got {len(row)}. "
-                            f"Format: Name, Subject, StartTime, EndTime"
-                        )
-                    
-                    try:
-                        name = row[0].strip()
-                        subject = row[1].strip()
-                        start_time_str = row[2].strip()
-                        end_time_str = row[3].strip()
-                        
-                        # Validate fields
-                        if not name:
-                            raise ValueError(f"Row {row_number}: Person name is empty")
-                        if not subject:
-                            raise ValueError(f"Row {row_number}: Event subject is empty")
-                        
-                        # Parse times
-                        start_time = self._parse_time(start_time_str, row_number, "start")
-                        end_time = self._parse_time(end_time_str, row_number, "end")
-                        
-                        # Validate times are within working hours
-                        self._validate_working_hours(start_time, row_number, "start")
-                        self._validate_working_hours(end_time, row_number, "end")
-                        
-                        # Create or retrieve person
-                        if name not in calendar.people:
-                            person = Person(name)
-                            calendar.add_person(person)
-                        else:
-                            person = calendar.get_person(name)
-                        
-                        # Create and add event
-                        event = Event(subject, start_time, end_time)
-                        person.add_event(event)
-                        
-                        logger.debug(
-                            f"Loaded event: {name} - {subject} ({start_time}-{end_time})"
-                        )
-                        
-                    except ValueError as e:
-                        # Re-raise validation errors with context
-                        raise ValueError(f"Row {row_number}: {str(e)}")
-        
+                    self._process_row(row, row_number, calendar)
         except csv.Error as e:
             raise ValueError(f"CSV parsing error: {str(e)}")
-        
+
         logger.info(f"Successfully loaded {calendar.person_count()} people with "
                     f"{len(calendar.get_all_events())} events")
-        
         return calendar
+
+    def _process_row(self, row: list, row_number: int, calendar: Calendar) -> None:
+        """
+        Parse and validate a single CSV row, then add the event to the calendar.
+        """
+        if len(row) != 4:
+            raise ValueError(
+                f"Row {row_number}: Expected 4 columns, got {len(row)}. "
+                f"Format: Name, Subject, StartTime, EndTime"
+            )
+        try:
+            name, subject, start_str, end_str = (cell.strip() for cell in row)
+
+            if not name:
+                raise ValueError("Person name is empty")
+            if not subject:
+                raise ValueError("Event subject is empty")
+
+            start_time = self._parse_time(start_str, row_number, "start")
+            end_time = self._parse_time(end_str, row_number, "end")
+            self._validate_working_hours(start_time, row_number, "start")
+            self._validate_working_hours(end_time, row_number, "end")
+
+            if name not in calendar.people:
+                calendar.add_person(Person(name))
+            calendar.get_person(name).add_event(Event(subject, start_time, end_time))
+
+            logger.debug(f"Loaded event: {name} - {subject} ({start_time}-{end_time})")
+        except ValueError as e:
+            raise ValueError(f"Row {row_number}: {str(e)}")
 
     def _parse_time(self, time_str: str, row_number: int, field_name: str) -> time:
         """
