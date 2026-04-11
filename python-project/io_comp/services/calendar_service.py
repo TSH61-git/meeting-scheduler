@@ -6,7 +6,8 @@ from datetime import time, timedelta
 from typing import List, Tuple
 import logging
 
-from io_comp.models import Calendar
+from io_comp.data import CalendarRepository
+from io_comp.config import WorkingHoursConfig, DEFAULT_WORKING_HOURS
 
 
 logger = logging.getLogger(__name__)
@@ -20,18 +21,10 @@ class CalendarService:
     using efficient interval merging algorithm.
     """
 
-    # Define working hours as class constants
-    WORKING_HOURS_START = time(7, 0)
-    WORKING_HOURS_END = time(19, 0)
-
-    def __init__(self, calendar: Calendar):
-        """
-        Initialize the CalendarService with a calendar.
-        
-        Args:
-            calendar: A Calendar object containing people and their events.
-        """
-        self.calendar = calendar
+    def __init__(self, repo: CalendarRepository, config: WorkingHoursConfig = DEFAULT_WORKING_HOURS):
+        """Initialize CalendarService with a repository and optional working hours config."""
+        self.calendar = repo.load()
+        self._config = config
 
     def find_available_slots(
         self,
@@ -70,7 +63,7 @@ class CalendarService:
         if event_duration.total_seconds() <= 0:
             raise ValueError("Event duration must be positive")
         working_day_minutes = self._time_difference_minutes(
-            self.WORKING_HOURS_START, self.WORKING_HOURS_END
+            self._config.start, self._config.end
         )
         if event_duration.total_seconds() > working_day_minutes * 60:
             raise ValueError(
@@ -103,13 +96,13 @@ class CalendarService:
 
     def _get_free_intervals(self, busy_intervals: List[Tuple[time, time]]) -> List[Tuple[time, time]]:
         """Return free intervals within working hours given merged busy intervals."""
-        free, current = [], self.WORKING_HOURS_START
+        free, current = [], self._config.start
         for busy_start, busy_end in busy_intervals:
             if current < busy_start:
                 free.append((current, busy_start))
             current = max(current, busy_end)
-        if current < self.WORKING_HOURS_END:
-            free.append((current, self.WORKING_HOURS_END))
+        if current < self._config.end:
+            free.append((current, self._config.end))
         return free
 
     def _filter_slots_by_duration(

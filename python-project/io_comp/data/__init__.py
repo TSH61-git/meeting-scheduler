@@ -1,8 +1,8 @@
 """
-Data loaders for the calendar application.
-Exports CSVDataLoader and related classes.
+Data layer for the calendar application.
 """
 
-from .csv_loader import CSVDataLoader
+from .repository import CalendarRepository
+from .csv_loader import CSVCalendarRepository
 
-__all__ = ["CSVDataLoader"]
+__all__ = ["CalendarRepository", "CSVCalendarRepository"]

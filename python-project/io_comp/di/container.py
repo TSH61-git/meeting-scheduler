@@ -5,8 +5,7 @@ Dependency Injection container for managing application dependencies.
 from typing import Any, Callable, Dict, Optional
 import logging
 
-from io_comp.models import Calendar
-from io_comp.data import CSVDataLoader
+from io_comp.data import CSVCalendarRepository
 from io_comp.services import CalendarService
 
 
@@ -92,30 +91,8 @@ def create_default_container(csv_file_path: str) -> DIContainer:
     """
     container = DIContainer()
     
-    # Register CSV loader as a singleton
-    csv_loader = CSVDataLoader(csv_file_path)
-    container.register_singleton("csv_loader", csv_loader)
-    logger.debug(f"Created CSV loader with file: {csv_file_path}")
-    
-    # Register Calendar as a singleton (loaded from CSV)
-    def load_calendar() -> Calendar:
-        loader = container.get("csv_loader")
-        calendar = loader.load()
-        logger.info(f"Loaded calendar with {calendar.person_count()} people")
-        return calendar
-    
-    # Execute factory once and cache as singleton
-    calendar = load_calendar()
-    container.register_singleton("calendar", calendar)
-    
-    # Register CalendarService as a singleton (depends on Calendar)
-    def create_service() -> CalendarService:
-        cal = container.get("calendar")
-        service = CalendarService(cal)
-        logger.debug("Created CalendarService")
-        return service
-    
-    service = create_service()
+    repo = CSVCalendarRepository(csv_file_path)
+    service = CalendarService(repo)
     container.register_singleton("calendar_service", service)
     
     logger.info("DI container configured successfully")

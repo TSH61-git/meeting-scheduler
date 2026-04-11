@@ -1,5 +1,5 @@
 """
-CSV data loader for parsing calendar.csv files.
+CSV implementation of CalendarRepository.
 """
 
 import csv
@@ -9,18 +9,21 @@ from typing import Optional
 import logging
 
 from io_comp.models import Calendar, Person, Event
+from io_comp.config import DEFAULT_WORKING_HOURS
 
 
 logger = logging.getLogger(__name__)
 
 
-class CSVDataLoader:
+class CSVCalendarRepository:
     """
     Loads calendar data from a CSV file into a Calendar object.
     
     CSV Format:
         Person name, Event subject, Event start time, Event end time
         Example: Alice,"Morning meeting",08:00,09:30
+
+    Implements CalendarRepository Protocol.
     """
 
     def __init__(self, file_path: str):
@@ -122,22 +125,9 @@ class CSVDataLoader:
             )
 
     def _validate_working_hours(self, event_time: time, row_number: int, field_name: str) -> None:
-        """
-        Validate that a time is within working hours (07:00-19:00).
-        
-        Args:
-            event_time: The time to validate.
-            row_number: Row number for error reporting.
-            field_name: Name of the field ("start" or "end") for error messages.
-            
-        Raises:
-            ValueError: If time is outside working hours.
-        """
-        working_start = time(7, 0)
-        working_end = time(19, 0)
-        
-        if not (working_start <= event_time < working_end):
+        """Validate that a time is within working hours."""
+        if not (DEFAULT_WORKING_HOURS.start <= event_time <= DEFAULT_WORKING_HOURS.end):
             raise ValueError(
                 f"{field_name.capitalize()} time {event_time} is outside "
-                f"working hours ({working_start}-{working_end})"
+                f"working hours ({DEFAULT_WORKING_HOURS.start}-{DEFAULT_WORKING_HOURS.end})"
             )
