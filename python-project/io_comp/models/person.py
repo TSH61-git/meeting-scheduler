@@ -2,7 +2,7 @@
 Person model representing a calendar participant.
 """
 
-from typing import List
+from typing import List, Optional
 from .event import Event
 
 
@@ -15,12 +15,13 @@ class Person:
     - add_event/remove_event are the only ways to modify events
     """
 
-    def __init__(self, name: str, events: List[Event] = None):
+    def __init__(self, name: str, events: Optional[List[Event]] = None) -> None:
         self._name = name
         self._events: List[Event] = list(events) if events is not None else []
 
     @property
     def name(self) -> str:
+        """Return the person's name (read-only)."""
         return self._name
 
     @property
@@ -31,7 +32,8 @@ class Person:
     def __repr__(self) -> str:
         return f"Person(name='{self._name}', events_count={len(self._events)})"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        """Two persons are equal if they have the same name."""
         if not isinstance(other, Person):
             return False
         return self._name == other._name
@@ -44,7 +46,7 @@ class Person:
         self._events.append(event)
 
     def remove_event(self, event: Event) -> None:
-        """Remove an event from the person's calendar."""
+        """Remove an event from the person's calendar if it exists."""
         if event in self._events:
             self._events.remove(event)
 

@@ -10,15 +10,14 @@ from io_comp.exceptions import InvalidEventError
 
 @dataclass(frozen=True)
 class Event:
-    """
-    Immutable representation of a single calendar event.
-    frozen=True ensures no field can be modified after creation.
-    """
+    """Immutable calendar event. Fields cannot be modified after creation."""
+
     subject: str
     start_time: time
     end_time: time
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Validate that end_time is after start_time."""
         if self.end_time <= self.start_time:
             raise InvalidEventError(
                 f"Event end time ({self.end_time}) must be after start time ({self.start_time})"

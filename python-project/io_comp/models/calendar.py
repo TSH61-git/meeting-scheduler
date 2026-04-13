@@ -2,7 +2,7 @@
 Calendar model representing the entire calendar system with multiple people.
 """
 
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 from .person import Person
 from .event import Event
 
@@ -13,10 +13,10 @@ class Calendar:
 
     - people is returned as a copy to prevent external mutation
     - add_person/remove_person are the only ways to modify the people dict
-    - working hours removed (managed by WorkingHoursConfig in config.py)
+    - working hours are managed externally by WorkingHoursConfig
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._people: Dict[str, Person] = {}
 
     def __repr__(self) -> str:

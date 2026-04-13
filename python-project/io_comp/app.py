@@ -5,8 +5,9 @@ Finds available meeting slots for a group of people using the DI container.
 
 import sys
 import logging
-from datetime import timedelta
+from datetime import time, timedelta
 from pathlib import Path
+from typing import List, Tuple
 
 from io_comp.di.container import create_default_container
 from io_comp.exceptions import (
@@ -14,7 +15,7 @@ from io_comp.exceptions import (
 )
 
 
-def _configure_logging():
+def _configure_logging() -> None:
     """Configure logging to both console and file."""
     logs_dir = Path(__file__).parent.parent / "logs"
     logs_dir.mkdir(exist_ok=True)
@@ -33,7 +34,8 @@ _configure_logging()
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> None:
+    """Entry point - load calendar, resolve inputs, find and display available slots."""
     try:
         csv_file_path = Path(__file__).parent.parent / "resources" / "calendar.csv"
 
@@ -74,14 +76,14 @@ def main():
         sys.exit(1)
 
 
-def _resolve_inputs() -> tuple:
+def _resolve_inputs() -> Tuple[List[str], int]:
     """Return (person_names, duration_minutes) from CLI args or interactive prompt."""
     if len(sys.argv) > 1:
         return _parse_args(sys.argv[1:])
     return _prompt_user()
 
 
-def _parse_args(args: list) -> tuple:
+def _parse_args(args: List[str]) -> Tuple[List[str], int]:
     """Parse CLI arguments in format: name1 name2 ... duration_minutes."""
     if len(args) < 2:
         raise InvalidRequestError(
@@ -98,7 +100,7 @@ def _parse_args(args: list) -> tuple:
         raise InvalidRequestError(f"Duration must be a number, got: '{args[-1]}'")
 
 
-def _prompt_user() -> tuple:
+def _prompt_user() -> Tuple[List[str], int]:
     """Prompt the user interactively for person names and meeting duration."""
     print("\n=== Calendar Available Slots Finder ===\n")
 
@@ -122,7 +124,11 @@ def _prompt_user() -> tuple:
     return person_names, duration_minutes
 
 
-def display_results(person_names: list, duration_minutes: int, available_slots: list):
+def display_results(
+    person_names: List[str],
+    duration_minutes: int,
+    available_slots: List[Tuple[time, time]]
+) -> None:
     """Display available slots in a user-friendly format."""
     print(f"\n=== Available Meeting Slots ===")
     print(f"People: {', '.join(person_names)}")
