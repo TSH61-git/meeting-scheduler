@@ -83,7 +83,7 @@ class CSVCalendarRepository:
             self._validate_working_hours(start_time, row_number, "start")
             self._validate_working_hours(end_time, row_number, "end")
 
-            if name not in calendar.people:
+            if calendar.get_person(name) is None:
                 calendar.add_person(Person(name))
             calendar.get_person(name).add_event(Event(subject, start_time, end_time))
 
