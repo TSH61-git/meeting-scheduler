@@ -8,6 +8,7 @@ import logging
 
 from io_comp.data import CalendarRepository
 from io_comp.config import WorkingHoursConfig, DEFAULT_WORKING_HOURS
+from io_comp.exceptions import PersonNotFoundError, InvalidDurationError, InvalidRequestError
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class CalendarService:
         for name in person_names:
             person = self.calendar.get_person(name)
             if person is None:
-                raise ValueError(f"Person '{name}' not found in calendar")
+                raise PersonNotFoundError(f"Person '{name}' not found in calendar")
             busy = self._get_busy_intervals(person.events)
             logger.debug(f"{name}: {len(busy)} busy intervals")
             result.append(busy)
@@ -59,14 +60,14 @@ class CalendarService:
     def _validate_inputs(self, person_names: List[str], event_duration: timedelta) -> None:
         """Validate person list and event duration."""
         if not person_names or not isinstance(person_names, list):
-            raise ValueError("At least one person must be specified")
+            raise InvalidRequestError("At least one person must be specified")
         if event_duration.total_seconds() <= 0:
-            raise ValueError("Event duration must be positive")
+            raise InvalidDurationError("Event duration must be positive")
         working_day_minutes = self._time_difference_minutes(
             self._config.start, self._config.end
         )
         if event_duration.total_seconds() > working_day_minutes * 60:
-            raise ValueError(
+            raise InvalidDurationError(
                 f"Event duration ({event_duration}) exceeds working day length "
                 f"({working_day_minutes} minutes)"
             )

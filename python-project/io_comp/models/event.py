@@ -3,7 +3,8 @@ Event model representing a single calendar event.
 """
 
 from datetime import time
-from typing import Optional
+
+from io_comp.exceptions import InvalidEventError
 
 
 class Event:
@@ -29,7 +30,7 @@ class Event:
             ValueError: If end_time is not after start_time.
         """
         if end_time <= start_time:
-            raise ValueError(f"Event end time ({end_time}) must be after start time ({start_time})")
+            raise InvalidEventError(f"Event end time ({end_time}) must be after start time ({start_time})")
         
         self.subject = subject
         self.start_time = start_time

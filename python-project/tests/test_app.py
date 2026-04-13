@@ -7,6 +7,7 @@ from datetime import time, timedelta
 
 from io_comp.models import Calendar, Person, Event
 from io_comp.services import CalendarService
+from io_comp.exceptions import PersonNotFoundError, InvalidDurationError, InvalidRequestError
 
 
 class FakeCalendarRepository:
@@ -177,28 +178,28 @@ class TestCalendarService:
         """Empty person list raises ValueError."""
         service = make_service(example_calendar)
 
-        with pytest.raises(ValueError, match="At least one person"):
+        with pytest.raises(InvalidRequestError):
             service.find_available_slots([], timedelta(minutes=60))
 
     def test_error_person_not_found(self, example_calendar):
         """Non-existent person raises ValueError."""
         service = make_service(example_calendar)
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(PersonNotFoundError):
             service.find_available_slots(["NonExistent"], timedelta(minutes=60))
 
     def test_error_zero_duration(self, example_calendar):
         """Zero duration raises ValueError."""
         service = make_service(example_calendar)
 
-        with pytest.raises(ValueError, match="positive"):
+        with pytest.raises(InvalidDurationError):
             service.find_available_slots(["Alice"], timedelta(minutes=0))
 
     def test_error_duration_exceeds_working_day(self, example_calendar):
         """Duration exceeding 12-hour working day raises ValueError."""
         service = make_service(example_calendar)
 
-        with pytest.raises(ValueError, match="exceeds working day"):
+        with pytest.raises(InvalidDurationError):
             service.find_available_slots(["Alice"], timedelta(hours=13))
 
     def test_multiple_people_complex_schedule(self, example_calendar):
