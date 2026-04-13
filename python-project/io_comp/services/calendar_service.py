@@ -9,6 +9,7 @@ import logging
 from io_comp.data import CalendarRepository
 from io_comp.config import WorkingHoursConfig, DEFAULT_WORKING_HOURS
 from io_comp.exceptions import PersonNotFoundError, InvalidDurationError, InvalidRequestError
+from io_comp.models import Event
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class CalendarService:
                 f"({working_day_minutes} minutes)"
             )
 
-    def _get_busy_intervals(self, events) -> List[Tuple[time, time]]:
+    def _get_busy_intervals(self, events: List[Event]) -> List[Tuple[time, time]]:
         """Convert events to sorted (start, end) tuples."""
         return sorted((event.start_time, event.end_time) for event in events)
 

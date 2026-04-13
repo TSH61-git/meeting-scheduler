@@ -5,7 +5,6 @@ CSV implementation of CalendarRepository.
 import csv
 from datetime import time
 from pathlib import Path
-from typing import Optional
 import logging
 
 from io_comp.models import Calendar, Person, Event
@@ -27,23 +26,12 @@ class CSVCalendarRepository:
     Implements CalendarRepository Protocol.
     """
 
-    def __init__(self, file_path: str):
-        """
-        Initialize the CSV data loader.
-        
-        Args:
-            file_path: Path to the CSV file.
-        """
+    def __init__(self, file_path: str) -> None:
+        """Initialize with path to the CSV file."""
         self.file_path = Path(file_path)
 
     def load(self) -> Calendar:
-        """
-        Load and parse the CSV file into a Calendar object.
-        
-        Raises:
-            FileNotFoundError: If the CSV file does not exist.
-            ValueError: If CSV format is invalid or data cannot be parsed.
-        """
+        """Load and parse the CSV file into a Calendar object."""
         if not self.file_path.exists():
             raise FileNotFoundError(f"Calendar file not found: {self.file_path}")
 
@@ -62,9 +50,7 @@ class CSVCalendarRepository:
         return calendar
 
     def _process_row(self, row: list, row_number: int, calendar: Calendar) -> None:
-        """
-        Parse and validate a single CSV row, then add the event to the calendar.
-        """
+        """Parse and validate a single CSV row, then add the event to the calendar."""
         if len(row) != 4:
             raise CsvParseError(
                 f"Row {row_number}: Expected 4 columns, got {len(row)}. "
@@ -80,8 +66,8 @@ class CSVCalendarRepository:
 
             start_time = self._parse_time(start_str, row_number, "start")
             end_time = self._parse_time(end_str, row_number, "end")
-            self._validate_working_hours(start_time, row_number, "start")
-            self._validate_working_hours(end_time, row_number, "end")
+            self._validate_working_hours(start_time, "start")
+            self._validate_working_hours(end_time, "end")
 
             if calendar.get_person(name) is None:
                 calendar.add_person(Person(name))
@@ -92,40 +78,18 @@ class CSVCalendarRepository:
             raise CsvParseError(f"Row {row_number}: {e}")
 
     def _parse_time(self, time_str: str, row_number: int, field_name: str) -> time:
-        """
-        Parse a time string in HH:MM format.
-        
-        Args:
-            time_str: Time string to parse (e.g., "09:30").
-            row_number: Row number for error reporting.
-            field_name: Name of the field ("start" or "end") for error messages.
-            
-        Returns:
-            A datetime.time object.
-            
-        Raises:
-            ValueError: If time format is invalid.
-        """
+        """Parse HH:MM time string. Raises CsvParseError if format is invalid."""
         try:
             parts = time_str.split(':')
             if len(parts) != 2:
-                raise ValueError(
-                    f"Invalid {field_name} time format '{time_str}'. "
-                    f"Expected HH:MM format"
-                )
-            
-            hour = int(parts[0])
-            minute = int(parts[1])
-            
-            return time(hour, minute)
-        
+                raise ValueError(f"Expected HH:MM format")
+            return time(int(parts[0]), int(parts[1]))
         except (ValueError, TypeError) as e:
             raise CsvParseError(
-                f"Invalid {field_name} time '{time_str}'. "
-                f"Expected HH:MM format (e.g., 09:30). Details: {e}"
+                f"Invalid {field_name} time '{time_str}'. Expected HH:MM (e.g. 09:30). Details: {e}"
             )
 
-    def _validate_working_hours(self, event_time: time, row_number: int, field_name: str) -> None:
+    def _validate_working_hours(self, event_time: time, field_name: str) -> None:
         """Validate that a time is within working hours."""
         if not (DEFAULT_WORKING_HOURS.start <= event_time <= DEFAULT_WORKING_HOURS.end):
             raise CsvParseError(
