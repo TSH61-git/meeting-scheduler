@@ -94,6 +94,7 @@ def create_default_container(csv_file_path: str) -> DIContainer:
     repo = CSVCalendarRepository(csv_file_path)
     service = CalendarService(repo)
     container.register_singleton("calendar_service", service)
+    logger.info("CalendarService created and registered successfully")
     
     logger.info("DI container configured successfully")
     return container
