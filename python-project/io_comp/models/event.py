@@ -23,6 +23,10 @@ class Event:
                 f"Event end time ({self.end_time}) must be after start time ({self.start_time})"
             )
 
+    def __lt__(self, other: "Event") -> bool:
+        """Compare events by start time for sorting."""
+        return self.start_time < other.start_time
+
     def overlaps_with(self, other: "Event") -> bool:
         """Return True if this event overlaps with another."""
         return self.start_time < other.end_time and other.start_time < self.end_time

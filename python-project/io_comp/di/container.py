@@ -37,11 +37,6 @@ class DIContainer:
             return self._factories[key]()
         raise KeyError(f"Dependency '{key}' not registered in DI container")
 
-    def clear(self) -> None:
-        """Remove all registered dependencies."""
-        self._singletons.clear()
-        self._factories.clear()
-        logger.debug("Cleared all dependencies from DI container")
 
 
 def create_default_container(csv_file_path: str) -> DIContainer:
